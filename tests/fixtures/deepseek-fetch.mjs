@@ -7,7 +7,9 @@ if(process.env.TEST_BLOCK_KNOWLEDGE_READ === 'true') {
 const original=globalThis.fetch;
 globalThis.fetch=async(url,options)=>{
  if(!String(url).startsWith('https://api.deepseek.com/'))return original(url,options);
- const content=JSON.parse(options.body).messages.at(-1).content;
+ const request=JSON.parse(options.body);
+ if(request.model === 'deepseek-chat' || request.thinking?.type !== 'disabled')throw Error('test: incompatible DeepSeek migration request');
+ const content=request.messages.at(-1).content;
  const question=content.split('【学生本轮问题】').at(-1);
  if(question.includes('TEST_PAGE_CONTEXT')) {
   for(const value of ['"sourceVersion":"c-v1"','"activeLineId":"update-left"','"lineId":"update-left"','"active":true','"comparedValue":5','mid: 未计算','目标值: 7'])

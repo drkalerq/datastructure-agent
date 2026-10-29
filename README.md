@@ -41,7 +41,7 @@ Copy-Item .env.example .env
 npm start
 ```
 
-启动及算法/判分接口不需要模型密钥。示例配置默认 AGENT_MOCK=true，优先使用免费开发模板；关闭Mock且配置DEEPSEEK_API_KEY后才调用真实API。不要把 `.env` 提交到仓库。模型配置、聊天页、限流与预算说明见[Agent说明](backend/src/agent/README.md)。
+启动及算法/判分接口不需要模型密钥。示例配置默认 AGENT_MOCK=true，优先使用免费开发模板；关闭Mock且配置DEEPSEEK_API_KEY后才调用真实API。当前模型默认 `deepseek-flash`，显式关闭思考模式；旧配置中的 `deepseek-chat` 会自动映射为新模型。已有用户更新后须重启服务，无需重新填写密钥。不要把 `.env` 提交到仓库。模型配置、聊天页、限流与预算说明见[Agent说明](backend/src/agent/README.md)。
 
 启动后，另开一个 PowerShell 窗口检查服务：
 

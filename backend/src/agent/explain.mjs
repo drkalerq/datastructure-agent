@@ -122,7 +122,7 @@ async function explain(parsedBody, ctx = {}) {
           stepRefs,
           ...metadata,
           usage: {
-            model: result.model || 'deepseek-chat',
+            model: result.model || provider.model,
             cost: result.cost ?? null,
             costCurrency: 'CNY',
             costBasis: result.cost == null ? null : '按后端配置单价估算，非实际账单',
