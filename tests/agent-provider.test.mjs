@@ -6,6 +6,38 @@ import { join } from 'node:path';
 import { DeepSeekProvider } from '../backend/src/agent/providers/deepseek.js';
 import { checkRateLimit, reserveModelCall, finishModelCall, getUsage } from '../backend/src/agent/rate-limit.js';
 
+
+test('provider migrates retired chat configuration and sends non-thinking Chat Completions requests', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalModel = process.env.DEEPSEEK_MODEL;
+  try {
+    const messages = [{ role: 'user', content: '为什么更新左边界？' }];
+    for (const [configured, expected] of [[undefined, 'deepseek-flash'], ['deepseek-chat', 'deepseek-flash'], ['  deepseek-chat  ', 'deepseek-flash'], ['deepseek-v4-pro', 'deepseek-v4-pro']]) {
+      if (configured === undefined) delete process.env.DEEPSEEK_MODEL;
+      else process.env.DEEPSEEK_MODEL = configured;
+      globalThis.fetch = async (url, options) => {
+        assert.equal(url, 'https://api.deepseek.com/v1/chat/completions');
+        assert.equal(options.method, 'POST');
+        assert.equal(options.headers.Authorization, 'Bearer dummy');
+        const body = JSON.parse(options.body);
+        assert.equal(body.model, expected);
+        assert.deepEqual(body.messages, messages);
+        assert.deepEqual(body.thinking, { type: 'disabled' });
+        assert.equal(body.max_tokens, 1024);
+        assert.equal(body.stream, false);
+        return { ok: true, json: async () => ({ choices: [{ message: { content: '中点值小于目标。' } }] }) };
+      };
+      const result = await new DeepSeekProvider('dummy').chat(messages);
+      assert.equal(result.content, '中点值小于目标。');
+      assert.equal(result.model, expected);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalModel === undefined) delete process.env.DEEPSEEK_MODEL;
+    else process.env.DEEPSEEK_MODEL = originalModel;
+  }
+});
+
 test('provider timeout covers headers AND JSON body, including uncooperative fetch', async () => {
   const original = globalThis.fetch;
   try {

@@ -9,8 +9,11 @@ Node >=22.9，使用内置 fetch，无新增运行依赖。根目录复制 `.env
 - `AGENT_MOCK=true`：显式开发模板，优先级高于 Key，绝不调用模型；响应标注 Mock，费用0。
 - `AGENT_MOCK=false` 且配置 `DEEPSEEK_API_KEY`：调用真实 DeepSeek，可能产生费用。
 - 未开 Mock 且无 Key：503 MODEL_NOT_CONFIGURED。
-- `DEEPSEEK_MODEL` 配置模型，默认 deepseek-chat；`MODEL_TIMEOUT_MS` 包括响应头与正文，默认15000ms。失败502、超时504，不阻断算法及题库接口，不假称已自动降级。
+- `DEEPSEEK_MODEL` 配置模型，默认 `deepseek-flash`；`MODEL_TIMEOUT_MS` 包括响应头与正文，默认15000ms。失败502、超时504，不阻断算法及题库接口，不假称已自动降级。
 - API地址固定为官方HTTPS端点，旧的 MODEL_API_KEY/MODEL_NAME/MODEL_API_BASE 变量不再使用。
+- 2026-10-29迁移：官方已停用`deepseek-chat`，当前使用`deepseek-flash`。已有`.env`若仍填`deepseek-chat`，运行时自动映射为新模型；其他显式模型名仍按配置使用，不修改密钥。修改后重启服务。
+- 请求显式设置`thinking.type=disabled`，保持普通步骤问答的响应方式，避免新模型默认思考占用1024-token输出上限及15秒等待时间；三级提示仍控制解释深度。
+- 模型与思考模式依据[官方模型文档](https://api-docs.deepseek.com/quick_start/pricing/)及[思考模式说明](https://api-docs.deepseek.com/guides/thinking_mode/)。迁移不内置新价格；费用仍须按实际账户、时段和缓存情况核对配置。
 
 先通过04的创建运行接口取得真实 runId，再访问 `/src/features/agent/chat.html?runId=实际runId&stepIndex=1`。步骤索引从0计数。聊天页可输入问题、选择三级提示、查看原运行/步骤归属；失败重试使用原问题/运行/步骤/级别快照，切换输入不会改写历史回答的归属。
 

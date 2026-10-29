@@ -2,7 +2,9 @@ export class DeepSeekProvider {
   constructor(apiKey) {
     this.apiKey = apiKey || process.env.DEEPSEEK_API_KEY;
     if (!this.apiKey) throw new Error('MODEL_NOT_CONFIGURED');
-    this.model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
+    const configuredModel = process.env.DEEPSEEK_MODEL?.trim();
+    // The retired chat alias may remain in an existing local .env.
+    this.model = !configuredModel || configuredModel === 'deepseek-chat' ? 'deepseek-flash' : configuredModel;
     this.timeoutMs = Number(process.env.MODEL_TIMEOUT_MS) || 15000;
   }
 
@@ -18,7 +20,7 @@ export class DeepSeekProvider {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.apiKey}` },
           body: JSON.stringify({ model: this.model, messages, temperature: options.temperature ?? 0.7,
-            max_tokens: options.maxTokens ?? 1024, stream: false }),
+            max_tokens: options.maxTokens ?? 1024, stream: false, thinking: { type: 'disabled' } }),
           signal: controller.signal
         });
         // Do not echo upstream bodies (which may include sensitive diagnostic data).
